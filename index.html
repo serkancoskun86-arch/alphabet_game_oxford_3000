@@ -20,7 +20,7 @@
         .wrong { background: var(--coral) !important; color: white; border-color: transparent; }
         .passed { background: #dfe6e9 !important; color: #636e72; border-style: dashed; }
         
-        #panel { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 450px; text-align: center; min-height: 200px; }
+        #panel { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 450px; text-align: center; min-height: 200px; z-index: 10; }
         input { padding: 12px; width: 85%; margin: 15px 0; border: 2px solid #eee; border-radius: 10px; font-size: 1.2rem; text-align: center; outline: none; }
         
         .controls { display: flex; gap: 10px; justify-content: center; }
@@ -30,16 +30,16 @@
         .btn-hint { background: #f1c40f; }
         .btn-pass { background: #95a5a6; }
         
-        /* Result Table Styles */
+        #music-toggle { position: fixed; top: 20px; right: 20px; background: white; color: #333; padding: 10px; border-radius: 50px; font-size: 0.8rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000; }
+
         .result-container { max-height: 350px; overflow-y: auto; margin-top: 15px; border: 1px solid #eee; border-radius: 10px; }
         .result-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; background: white; }
-        .result-table th { position: sticky; top: 0; background: #f8f9fa; padding: 10px; border-bottom: 2px solid #eee; }
         .result-table td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
-        .status-icon { font-size: 1.1rem; }
     </style>
 </head>
 <body>
 
+    <button id="music-toggle" onclick="toggleMusic()">🎵 Music: ON</button>
     <h1>Word Adventure 🎡</h1>
 
     <div id="game-area">
@@ -57,7 +57,7 @@
         <div id="feedback" style="font-weight:bold; height:20px; margin:10px 0;"></div>
         <p id="definition" style="min-height:60px; color:#444; font-size: 1.1rem; line-height: 1.4;"></p>
         <p id="hint-area" style="color:#e67e22; font-weight:bold; letter-spacing:2px; font-family:monospace; min-height: 20px;"></p>
-        <input type="text" id="userInput" placeholder="Type answer and press Enter..." autocomplete="off">
+        <input type="text" id="userInput" placeholder="Type answer..." autocomplete="off">
         <div class="controls">
             <button class="btn-check" onclick="check()">CHECK</button>
             <button class="btn-hint" onclick="getHint()">HINT</button>
@@ -69,18 +69,63 @@
 
     <script>
         let session = [], currentIdx = 0, timeLeft = 420, timer;
+        let audioCtx, musicGain, isMusicOn = true;
         const alphabet = "ABCDEFGHIKLMNOPQRSTUVWYZ".split("");
 
+        // --- AUDIO ENGINE ---
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                startBackgroundMusic();
+            }
+        }
+
+        function startBackgroundMusic() {
+            musicGain = audioCtx.createGain();
+            musicGain.gain.setValueAtTime(0.05, audioCtx.currentTime); // Very soft volume
+            musicGain.connect(audioCtx.destination);
+
+            const playNote = (freq, time) => {
+                const osc = audioCtx.createOscillator();
+                const g = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, time);
+                g.gain.setValueAtTime(0, time);
+                g.gain.linearRampToValueAtTime(0.05, time + 0.1);
+                g.gain.exponentialRampToValueAtTime(0.001, time + 4);
+                osc.connect(g);
+                g.connect(musicGain);
+                osc.start(time);
+                osc.stop(time + 4);
+            };
+
+            // A simple 4-note loop (C - E - G - B)
+            const notes = [261.63, 329.63, 392.00, 493.88];
+            let nextNoteTime = audioCtx.currentTime;
+            
+            setInterval(() => {
+                if (isMusicOn && audioCtx.state === 'running') {
+                    const randomNote = notes[Math.floor(Math.random() * notes.length)];
+                    playNote(randomNote, nextNoteTime);
+                    nextNoteTime += 4;
+                }
+            }, 4000);
+        }
+
+        function toggleMusic() {
+            isMusicOn = !isMusicOn;
+            if (musicGain) musicGain.gain.setTargetAtTime(isMusicOn ? 0.05 : 0, audioCtx.currentTime, 0.1);
+            document.getElementById('music-toggle').innerText = isMusicOn ? "🎵 Music: ON" : "🔇 Music: OFF";
+        }
+
         function playSound(freq, dur = 0.2) {
-            try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                const g = ctx.createGain();
-                osc.frequency.setValueAtTime(freq, ctx.currentTime);
-                g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + dur);
-                osc.connect(g); g.connect(ctx.destination);
-                osc.start(); osc.stop(ctx.currentTime + dur);
-            } catch(e) {}
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + dur);
+            osc.connect(g); g.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + dur);
         }
 
         function speak(text) {
@@ -90,17 +135,14 @@
             window.speechSynthesis.speak(msg);
         }
 
+        // --- GAME LOGIC ---
         function startGame(level) {
-            if (!window.allWords || window.allWords.length === 0) { 
-                alert("Error: words.js is empty or not loaded correctly!"); 
-                return; 
-            }
+            initAudio(); // Initialize sound on first interaction
+            if (!window.allWords) { alert("words.js error!"); return; }
 
             session = alphabet.map(char => {
                 const pool = window.allWords.filter(w => w.l === char && w.lv === level);
-                const randomWord = pool.length > 0 
-                    ? pool[Math.floor(Math.random() * pool.length)] 
-                    : window.allWords.find(w => w.l === char); // Fallback
+                const randomWord = pool.length > 0 ? pool[Math.floor(Math.random() * pool.length)] : window.allWords.find(w => w.l === char);
                 return { ...randomWord, status: 'pending' };
             });
 
@@ -128,21 +170,13 @@
         }
 
         function refreshUI() {
-            // Check if every word has been attempted (either correct or wrong)
             const isGameOver = session.every(w => w.status === 'correct' || w.status === 'wrong');
-            if (isGameOver) {
-                endGame();
-                return;
-            }
+            if (isGameOver) { endGame(); return; }
 
-            // Skip letters that are already finished
-            let attempts = 0;
-            while ((session[currentIdx].status === 'correct' || session[currentIdx].status === 'wrong') && attempts < session.length) {
+            while (session[currentIdx].status === 'correct' || session[currentIdx].status === 'wrong') {
                 currentIdx = (currentIdx + 1) % session.length;
-                attempts++;
             }
 
-            // Update visuals
             session.forEach((w, i) => {
                 document.getElementById(`letter-${i}`).className = `letter ${w.status} ${i === currentIdx ? 'active' : ''}`;
             });
@@ -152,7 +186,6 @@
             document.getElementById('hint-area').innerText = '';
             document.getElementById('userInput').value = '';
             document.getElementById('userInput').focus();
-            document.getElementById('feedback').innerText = "";
 
             if (currentWord.status === 'passed') getHint();
             speak(currentWord.q);
@@ -202,44 +235,15 @@
         function endGame() {
             clearInterval(timer);
             const correctCount = session.filter(w => w.status === 'correct').length;
-            
-            let resultHTML = `
-                <h2 style="margin-top:0">Game Over!</h2>
-                <p style="font-size:1.2rem">Final Score: <b>${correctCount} / 24</b></p>
-                <div class="result-container">
-                    <table class="result-table">
-                        <thead>
-                            <tr>
-                                <th>L</th>
-                                <th>Result</th>
-                                <th>Correct Word</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-
+            let resultHTML = `<h2>Game Over!</h2><p>Final Score: <b>${correctCount} / 24</b></p><div class="result-container"><table class="result-table"><thead><tr><th>L</th><th>Result</th><th>Correct Word</th></tr></thead><tbody>`;
             session.forEach(w => {
                 const isCorrect = w.status === 'correct';
-                resultHTML += `
-                    <tr style="background: ${isCorrect ? '#f1fcf4' : '#fff5f5'}">
-                        <td><b>${w.l}</b></td>
-                        <td class="status-icon">${isCorrect ? '✅' : '❌'}</td>
-                        <td style="text-transform: uppercase; font-weight: bold;">${w.a[0]}</td>
-                    </tr>
-                `;
+                resultHTML += `<tr style="background: ${isCorrect ? '#f1fcf4' : '#fff5f5'}"><td><b>${w.l}</b></td><td>${isCorrect ? '✅' : '❌'}</td><td style="text-transform: uppercase;">${w.a[0]}</td></tr>`;
             });
-
-            resultHTML += `
-                        </tbody>
-                    </table>
-                </div>
-                <button onclick="location.reload()" style="background:var(--soft-blue); width:100%; margin-top:20px;">TRY AGAIN</button>
-            `;
-            
+            resultHTML += `</tbody></table></div><button onclick="location.reload()" style="background:var(--soft-blue); width:100%; margin-top:20px;">TRY AGAIN</button>`;
             const panel = document.getElementById('panel');
             panel.innerHTML = resultHTML;
             panel.style.width = "480px";
-            panel.style.maxWidth = "90vw";
         }
 
         document.getElementById('userInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') check(); });
