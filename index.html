@@ -166,6 +166,13 @@
     </style>
 </head>
 <body>
+    <script src="words.js"></script>
+
+<script>
+    // Burada artık wordBank değişkenini doğrudan kullanabilirsiniz.
+    // wordBank içindeki kelimeler otomatik olarak buraya akacaktır.
+    console.log("Kelimeler yüklendi, toplam sayı:", wordBank.length);
+</script>
 
     <h1>Word Adventure 🎡</h1>
 
@@ -222,15 +229,6 @@
         m.lang = 'en-GB'; m.rate = 0.85;
         window.speechSynthesis.speak(m);
     }
-
-<script src="words.js"></script>
-
-<script>
-    // Burada artık wordBank değişkenini doğrudan kullanabilirsiniz.
-    // wordBank içindeki kelimeler otomatik olarak buraya akacaktır.
-    console.log("Kelimeler yüklendi, toplam sayı:", wordBank.length);
-</script>
-}
 
     let session = [], current = 0, score = 0, time = 300, timerId, hintUsed = false;
     const alphabet = "ABCDEFGHIKLMNOPQRSTUVWYZ".split("");
