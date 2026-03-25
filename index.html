@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alphabet Game</title>
+    <title>Oxford 600 - Word Adventure Pro</title>
     <style>
         :root { --coral: #ff8b94; --mint: #a8e6cf; --gold: #ffd080; --soft-blue: #3498db; }
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 20px; }
@@ -20,21 +20,22 @@
         .wrong { background: var(--coral) !important; color: white; border-color: transparent; }
         .passed { background: #dfe6e9 !important; color: #636e72; border-style: dashed; }
         
-        #panel { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 450px; text-align: center; }
+        #panel { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 450px; text-align: center; min-height: 200px; }
         input { padding: 12px; width: 85%; margin: 15px 0; border: 2px solid #eee; border-radius: 10px; font-size: 1.2rem; text-align: center; outline: none; }
         
         .controls { display: flex; gap: 10px; justify-content: center; }
-        button { padding: 12px 25px; cursor: pointer; border: none; border-radius: 10px; color: white; font-weight: bold; flex: 1; }
+        button { padding: 12px 25px; cursor: pointer; border: none; border-radius: 10px; color: white; font-weight: bold; flex: 1; transition: 0.2s; }
+        button:hover { opacity: 0.9; }
         .btn-check { background: var(--soft-blue); }
         .btn-hint { background: #f1c40f; }
         .btn-pass { background: #95a5a6; }
         
         /* Result Table Styles */
-        .result-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9rem; }
-        .result-table th, .result-table td { padding: 8px; border: 1px solid #ddd; text-align: left; }
-        .result-table th { background: #f8f9fa; }
-        .row-correct { color: #27ae60; font-weight: bold; }
-        .row-wrong { color: #e74c3c; font-weight: bold; }
+        .result-container { max-height: 350px; overflow-y: auto; margin-top: 15px; border: 1px solid #eee; border-radius: 10px; }
+        .result-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; background: white; }
+        .result-table th { position: sticky; top: 0; background: #f8f9fa; padding: 10px; border-bottom: 2px solid #eee; }
+        .result-table td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
+        .status-icon { font-size: 1.1rem; }
     </style>
 </head>
 <body>
@@ -43,20 +44,20 @@
 
     <div id="game-area">
         <div id="wheel"></div>
-        <div id="overlay" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:100; text-align: center; background: rgba(255,255,255,0.9); padding: 20px; border-radius: 20px;">
-            <h3>Select Level</h3>
-            <button onclick="startGame('A1')" style="margin:5px; width:150px; background: var(--mint); color: #2d3436;">A1 - Beginner</button><br>
-            <button onclick="startGame('A2')" style="margin:5px; width:150px; background: var(--gold); color: #2d3436;">A2 - Elementary</button><br>
-            <button onclick="startGame('B1')" style="margin:5px; width:150px; background: var(--coral);">B1 - Intermediate</button>
+        <div id="overlay" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:100; text-align: center; background: rgba(255,255,255,0.95); padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+            <h3 style="margin-top:0">Select Level</h3>
+            <button onclick="startGame('A1')" style="margin:5px; width:180px; background: var(--mint); color: #2d3436;">A1 - Beginner</button><br>
+            <button onclick="startGame('A2')" style="margin:5px; width:180px; background: var(--gold); color: #2d3436;">A2 - Elementary</button><br>
+            <button onclick="startGame('B1')" style="margin:5px; width:180px; background: var(--coral);">B1 - Intermediate</button>
         </div>
     </div>
 
     <div id="panel" style="display:none">
-        <div id="timer" style="font-size:1.8rem; font-weight:900;">05:00</div>
+        <div id="timer" style="font-size:1.8rem; font-weight:900; color: #333;">05:00</div>
         <div id="feedback" style="font-weight:bold; height:20px; margin:10px 0;"></div>
-        <p id="definition" style="min-height:60px; color:#2d3436;"></p>
-        <p id="hint-area" style="color:#e67e22; font-weight:bold; letter-spacing:2px; font-family:monospace;"></p>
-        <input type="text" id="userInput" placeholder="Type answer..." autocomplete="off">
+        <p id="definition" style="min-height:60px; color:#444; font-size: 1.1rem; line-height: 1.4;"></p>
+        <p id="hint-area" style="color:#e67e22; font-weight:bold; letter-spacing:2px; font-family:monospace; min-height: 20px;"></p>
+        <input type="text" id="userInput" placeholder="Type answer and press Enter..." autocomplete="off">
         <div class="controls">
             <button class="btn-check" onclick="check()">CHECK</button>
             <button class="btn-hint" onclick="getHint()">HINT</button>
@@ -67,7 +68,7 @@
     <script src="words.js"></script>
 
     <script>
-        let session = [], currentIdx = 0, timeLeft = 420, timer; // 7 minutes
+        let session = [], currentIdx = 0, timeLeft = 420, timer;
         const alphabet = "ABCDEFGHIKLMNOPQRSTUVWYZ".split("");
 
         function playSound(freq, dur = 0.2) {
@@ -85,16 +86,21 @@
         function speak(text) {
             window.speechSynthesis.cancel();
             const msg = new SpeechSynthesisUtterance(text);
-            msg.lang = 'en-US'; msg.rate = 0.9;
+            msg.lang = 'en-US'; msg.rate = 0.95;
             window.speechSynthesis.speak(msg);
         }
 
         function startGame(level) {
-            if (!window.allWords) { alert("words.js error!"); return; }
+            if (!window.allWords || window.allWords.length === 0) { 
+                alert("Error: words.js is empty or not loaded correctly!"); 
+                return; 
+            }
 
             session = alphabet.map(char => {
                 const pool = window.allWords.filter(w => w.l === char && w.lv === level);
-                const randomWord = pool[Math.floor(Math.random() * pool.length)];
+                const randomWord = pool.length > 0 
+                    ? pool[Math.floor(Math.random() * pool.length)] 
+                    : window.allWords.find(w => w.l === char); // Fallback
                 return { ...randomWord, status: 'pending' };
             });
 
@@ -122,13 +128,21 @@
         }
 
         function refreshUI() {
-            const finished = session.every(w => w.status === 'correct' || w.status === 'wrong');
-            if (finished) { endGame(); return; }
-
-            while (session[currentIdx].status === 'correct' || session[currentIdx].status === 'wrong') {
-                currentIdx = (currentIdx + 1) % session.length;
+            // Check if every word has been attempted (either correct or wrong)
+            const isGameOver = session.every(w => w.status === 'correct' || w.status === 'wrong');
+            if (isGameOver) {
+                endGame();
+                return;
             }
 
+            // Skip letters that are already finished
+            let attempts = 0;
+            while ((session[currentIdx].status === 'correct' || session[currentIdx].status === 'wrong') && attempts < session.length) {
+                currentIdx = (currentIdx + 1) % session.length;
+                attempts++;
+            }
+
+            // Update visuals
             session.forEach((w, i) => {
                 document.getElementById(`letter-${i}`).className = `letter ${w.status} ${i === currentIdx ? 'active' : ''}`;
             });
@@ -161,7 +175,7 @@
 
         function getHint() {
             const word = session[currentIdx].a[0];
-            document.getElementById('hint-area').innerText = `${word[0].toUpperCase()}...${word.slice(-1).toUpperCase()} (${word.length})`;
+            document.getElementById('hint-area').innerText = `${word[0].toUpperCase()}...${word.slice(-1).toUpperCase()} (${word.length} letters)`;
         }
 
         function pass() {
@@ -176,6 +190,7 @@
         }
 
         function startTimer() {
+            if(timer) clearInterval(timer);
             timer = setInterval(() => {
                 timeLeft--;
                 let m = Math.floor(timeLeft / 60), s = timeLeft % 60;
@@ -186,32 +201,45 @@
 
         function endGame() {
             clearInterval(timer);
-            const correct = session.filter(w => w.status === 'correct').length;
+            const correctCount = session.filter(w => w.status === 'correct').length;
             
-            let tableHTML = `
-                <h2>Summary</h2>
-                <p>Correct: ${correct} / 24</p>
-                <div style="max-height: 300px; overflow-y: auto;">
-                <table class="result-table">
-                    <tr><th>Letter</th><th>Status</th><th>Answer</th></tr>
+            let resultHTML = `
+                <h2 style="margin-top:0">Game Over!</h2>
+                <p style="font-size:1.2rem">Final Score: <b>${correctCount} / 24</b></p>
+                <div class="result-container">
+                    <table class="result-table">
+                        <thead>
+                            <tr>
+                                <th>L</th>
+                                <th>Result</th>
+                                <th>Correct Word</th>
+                            </tr>
+                        </thead>
+                        <tbody>
             `;
 
             session.forEach(w => {
-                const statusText = w.status === 'correct' ? '✅' : '❌';
-                const statusClass = w.status === 'correct' ? 'row-correct' : 'row-wrong';
-                tableHTML += `
-                    <tr class="${statusClass}">
-                        <td>${w.l}</td>
-                        <td>${statusText}</td>
-                        <td>${w.a[0].toUpperCase()}</td>
+                const isCorrect = w.status === 'correct';
+                resultHTML += `
+                    <tr style="background: ${isCorrect ? '#f1fcf4' : '#fff5f5'}">
+                        <td><b>${w.l}</b></td>
+                        <td class="status-icon">${isCorrect ? '✅' : '❌'}</td>
+                        <td style="text-transform: uppercase; font-weight: bold;">${w.a[0]}</td>
                     </tr>
                 `;
             });
 
-            tableHTML += `</table></div><br><button onclick="location.reload()" style="background:var(--soft-blue); width:100%">Play Again</button>`;
+            resultHTML += `
+                        </tbody>
+                    </table>
+                </div>
+                <button onclick="location.reload()" style="background:var(--soft-blue); width:100%; margin-top:20px;">TRY AGAIN</button>
+            `;
             
-            document.getElementById('panel').innerHTML = tableHTML;
-            document.getElementById('panel').style.width = "500px";
+            const panel = document.getElementById('panel');
+            panel.innerHTML = resultHTML;
+            panel.style.width = "480px";
+            panel.style.maxWidth = "90vw";
         }
 
         document.getElementById('userInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') check(); });
