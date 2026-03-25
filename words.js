@@ -250,8 +250,8 @@ const a1Words = [
     { l: 'Z', q: 'A shape with sharp turns.', a: ['zigzag'], lv: 'A1' },
     { l: 'Z', q: 'Enthusiasm or energy.', a: ['zest'], lv: 'A1' }
  ];
+
 const a2Words = [ 
-  const a2Words = [
     // A Harfi
     { l: 'A', q: 'To say yes to an invitation or an offer.', a: ['accept'], lv: 'A2' },
     { l: 'A', q: 'A person who performs in a play or movie.', a: ['actor'], lv: 'A2' },
@@ -502,8 +502,8 @@ const a2Words = [
     { l: 'Z', q: 'A shape with sharp angles.', a: ['zigzag'], lv: 'A2' },
     { l: 'Z', q: 'Enthusiasm.', a: ['zest'], lv: 'A2' }
  ];
+
 const b1Words = [ 
-  const b1Words = [
     // A Harfi
     { l: 'A', q: 'A feeling of great surprise or wonder.', a: ['amazement'], lv: 'B1' },
     { l: 'A', q: 'To achieve or reach a particular goal.', a: ['attain'], lv: 'B1' },
@@ -756,8 +756,5 @@ const b1Words = [
     { l: 'Z', q: 'A great interest or excitement.', a: ['zest'], lv: 'B1' }
  ];
 
-// Tüm listeleri tek bir havuzda birleştiriyoruz
-const wordBank = [...a1Words, ...a2Words, ...b1Words];
-
-// Bu değişkenin diğer dosyalar tarafından görülmesini sağlıyoruz
-window.wordBank = wordBank;
+// Kelimeleri dışarıya aktar (Global hale getir)
+window.allWords = [...a1Words, ...a2Words, ...b1Words];
