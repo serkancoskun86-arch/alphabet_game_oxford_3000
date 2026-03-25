@@ -3,27 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Oxford 600 - Word Adventure</title>
+    <title>Oxford 600 - Word Adventure Pro</title>
     <style>
-        :root { --coral: #ff8b94; --mint: #a8e6cf; --gold: #ffd080; }
-        body { font-family: sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; }
+        :root { --coral: #ff8b94; --mint: #a8e6cf; --gold: #ffd080; --soft-blue: #3498db; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 20px; }
         
-        #game-area { position: relative; width: 500px; height: 500px; margin: 20px; }
+        #game-area { position: relative; width: 500px; height: 500px; margin: 20px; border-radius: 50%; background: white; box-shadow: inset 0 0 50px rgba(0,0,0,0.05); }
         .letter { 
             position: absolute; width: 40px; height: 40px; background: white; 
             border: 2px solid #ddd; border-radius: 50%; display: flex; 
             align-items: center; justify-content: center; font-weight: bold;
-            transition: all 0.3s; transform: translate(-50%, -50%);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform: translate(-50%, -50%);
+            cursor: pointer;
         }
-        .active { background: var(--gold) !important; transform: translate(-50%, -50%) scale(1.3); z-index: 10; box-shadow: 0 0 15px rgba(0,0,0,0.2); }
+        .active { background: var(--gold) !important; transform: translate(-50%, -50%) scale(1.4); z-index: 10; box-shadow: 0 0 20px rgba(0,0,0,0.2); border-color: white; }
         .correct { background: var(--mint) !important; color: white; border-color: transparent; }
         .wrong { background: var(--coral) !important; color: white; border-color: transparent; }
+        .passed { background: #dfe6e9 !important; color: #636e72; border-style: dashed; }
         
-        #panel { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 400px; text-align: center; }
-        input { padding: 10px; width: 80%; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; font-size: 1.1rem; }
-        button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 5px; background: #3498db; color: white; font-weight: bold; }
+        #panel { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 450px; text-align: center; }
+        input { padding: 12px; width: 85%; margin: 15px 0; border: 2px solid #eee; border-radius: 10px; font-size: 1.2rem; text-align: center; outline: none; transition: 0.3s; }
+        input:focus { border-color: var(--soft-blue); }
+        
+        .controls { display: flex; gap: 10px; justify-content: center; }
+        button { padding: 12px 25px; cursor: pointer; border: none; border-radius: 10px; color: white; font-weight: bold; transition: 0.2s; flex: 1; }
+        button:active { transform: scale(0.95); }
+        .btn-check { background: var(--soft-blue); }
         .btn-hint { background: #f1c40f; }
         .btn-pass { background: #95a5a6; }
+        
+        #definition { font-size: 1.1rem; line-height: 1.5; min-height: 60px; color: #2d3436; margin: 10px 0; }
+        #feedback { font-weight: bold; height: 20px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -32,59 +42,62 @@
 
     <div id="game-area">
         <div id="wheel"></div>
-        <div id="overlay" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:100;">
-            <button onclick="startGame('A1')" style="margin:5px; width:150px;">A1 - Start</button><br>
-            <button onclick="startGame('A2')" style="margin:5px; width:150px;">A2 - Start</button><br>
-            <button onclick="startGame('B1')" style="margin:5px; width:150px;">B1 - Start</button>
+        <div id="overlay" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:100; text-align: center; background: rgba(255,255,255,0.9); padding: 20px; border-radius: 20px;">
+            <h3>Select Level</h3>
+            <button onclick="startGame('A1')" style="margin:5px; width:150px; background: var(--mint); color: #2d3436;">A1 - Beginner</button><br>
+            <button onclick="startGame('A2')" style="margin:5px; width:150px; background: var(--gold); color: #2d3436;">A2 - Elementary</button><br>
+            <button onclick="startGame('B1')" style="margin:5px; width:150px; background: var(--coral);">B1 - Intermediate</button>
         </div>
     </div>
 
     <div id="panel" style="display:none">
-        <div id="timer" style="font-size:1.5rem; font-weight:bold">05:00</div>
-        <p id="definition" style="font-style:italic; margin:15px 0"></p>
-        <p id="hint-area" style="color:var(--coral); font-weight:bold; letter-spacing:2px"></p>
-        <input type="text" id="userInput" placeholder="Your answer..." autocomplete="off">
-        <div style="display:flex; gap:10px; justify-content:center">
-            <button onclick="check()">Check</button>
-            <button class="btn-hint" onclick="getHint()">Hint</button>
-            <button class="btn-pass" onclick="pass()">Pass</button>
+        <div id="timer" style="font-size:1.8rem; font-weight:900; color: #2d3436;">05:00</div>
+        <div id="feedback"></div>
+        <p id="definition"></p>
+        <p id="hint-area" style="color:#e67e22; font-weight:bold; letter-spacing:3px; font-family: monospace;"></p>
+        <input type="text" id="userInput" placeholder="Type your answer..." autocomplete="off">
+        <div class="controls">
+            <button class="btn-check" onclick="check()">CHECK</button>
+            <button class="btn-hint" onclick="getHint()">HINT</button>
+            <button class="btn-pass" onclick="pass()">PASS</button>
         </div>
     </div>
 
     <script src="words.js"></script>
 
     <script>
-        let session = [], currentIdx = 0, score = 0, timeLeft = 300, timer;
+        let session = [], currentIdx = 0, timeLeft = 300, timer;
         const alphabet = "ABCDEFGHIKLMNOPQRSTUVWYZ".split("");
 
-        function playSound(freq, type = 'sine') {
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+        function playSound(freq, type = 'sine', dur = 0.2) {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + dur);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(); osc.stop(audioCtx.currentTime + dur);
+            } catch(e) { console.log("Audio blocked"); }
         }
 
         function speak(text) {
             window.speechSynthesis.cancel();
             const msg = new SpeechSynthesisUtterance(text);
-            msg.lang = 'en-US';
+            msg.lang = 'en-US'; msg.rate = 0.9;
             window.speechSynthesis.speak(msg);
         }
 
         function startGame(level) {
             if (!window.allWords) {
-                alert("Error: words.js not loaded!");
+                alert("CRITICAL ERROR: words.js could not be loaded. Please check file name and location.");
                 return;
             }
 
-            // Harf başına 8 kelimeden rastgele birini seçme (Randomization)
             session = alphabet.map(char => {
                 const pool = window.allWords.filter(w => w.l === char && w.lv === level);
                 const randomWord = pool[Math.floor(Math.random() * pool.length)];
-                return { ...randomWord, status: 'pending' };
+                return { ...randomWord, status: 'pending', hintShown: false };
             });
 
             document.getElementById('overlay').style.display = 'none';
@@ -98,7 +111,7 @@
         function renderWheel() {
             const wheel = document.getElementById('wheel');
             wheel.innerHTML = '';
-            const radius = 200;
+            const radius = 210;
             session.forEach((item, i) => {
                 const div = document.createElement('div');
                 div.className = 'letter';
@@ -112,60 +125,90 @@
         }
 
         function refreshUI() {
-            // Oyun bitti mi?
-            if (session.every(w => w.status !== 'pending' && w.status !== 'passed')) {
-                endGame(); return;
-            }
+            const allAnswered = session.every(w => w.status === 'correct' || w.status === 'wrong');
+            if (allAnswered) { endGame(); return; }
 
-            // Pas geçilen veya bekleyen ilk kelimeye odaklan
+            // Find next pending or passed word
+            let loopCount = 0;
             while (session[currentIdx].status === 'correct' || session[currentIdx].status === 'wrong') {
                 currentIdx = (currentIdx + 1) % session.length;
+                loopCount++;
+                if(loopCount > 30) break; 
             }
 
+            // Update wheel classes
             session.forEach((w, i) => {
-                document.getElementById(`letter-${i}`).className = `letter ${w.status} ${i === currentIdx ? 'active' : ''}`;
+                const el = document.getElementById(`letter-${i}`);
+                el.className = `letter ${w.status} ${i === currentIdx ? 'active' : ''}`;
             });
 
-            document.getElementById('definition').innerText = session[currentIdx].q;
+            const currentWord = session[currentIdx];
+            document.getElementById('definition').innerText = currentWord.q;
+            document.getElementById('definition').style.color = "#2d3436";
             document.getElementById('hint-area').innerText = '';
             document.getElementById('userInput').value = '';
+            document.getElementById('userInput').disabled = false;
             document.getElementById('userInput').focus();
-            speak(session[currentIdx].q);
+            document.getElementById('feedback').innerText = "";
+
+            // AUTO-HINT if coming back from a "PASS"
+            if (currentWord.status === 'passed') {
+                getHint();
+            }
+
+            speak(currentWord.q);
         }
 
         function check() {
             const input = document.getElementById('userInput').value.toLowerCase().trim();
+            if (!input) return;
+
             const correctAnswers = session[currentIdx].a.map(v => v.toLowerCase());
+            const feedbackEl = document.getElementById('feedback');
+            const inputEl = document.getElementById('userInput');
 
             if (correctAnswers.includes(input)) {
+                // CORRECT
                 session[currentIdx].status = 'correct';
-                playSound(880); // Başarı sesi
+                feedbackEl.innerText = "CORRECT! ✨";
+                feedbackEl.style.color = "var(--mint)";
+                playSound(880, 'sine', 0.3);
+                setTimeout(next, 800);
             } else {
+                // WRONG - Show Answer logic
                 session[currentIdx].status = 'wrong';
-                playSound(220, 'sawtooth'); // Hata sesi
+                inputEl.disabled = true;
+                const actualAnswer = session[currentIdx].a[0].toUpperCase();
+                
+                feedbackEl.innerText = "WRONG! ❌";
+                feedbackEl.style.color = "var(--coral)";
+                document.getElementById('definition').innerHTML = `Correct answer was: <b style="color:var(--coral)">${actualAnswer}</b>`;
+                
+                playSound(200, 'sawtooth', 0.5);
+                setTimeout(next, 2000); // Wait 2 seconds so they can see the correct answer
             }
-            
-            next();
         }
 
         function getHint() {
             const word = session[currentIdx].a[0];
-            document.getElementById('hint-area').innerText = `${word[0].toUpperCase()}...${word.slice(-1).toUpperCase()} (${word.length})`;
-            playSound(440);
+            document.getElementById('hint-area').innerText = `${word[0].toUpperCase()} ${" _ ".repeat(word.length - 2)} ${word.slice(-1).toUpperCase()} (${word.length} letters)`;
+            session[currentIdx].hintShown = true;
+            playSound(600, 'sine', 0.1);
         }
 
         function pass() {
             session[currentIdx].status = 'passed';
-            playSound(660);
+            playSound(440, 'sine', 0.1);
             next();
         }
 
         function next() {
             currentIdx = (currentIdx + 1) % session.length;
-            setTimeout(refreshUI, 400);
+            refreshUI();
         }
 
         function startTimer() {
+            if(timer) clearInterval(timer);
             timer = setInterval(() => {
                 timeLeft--;
                 let m = Math.floor(timeLeft / 60), s = timeLeft % 60;
@@ -176,9 +219,14 @@
 
         function endGame() {
             clearInterval(timer);
-            const correctCount = session.filter(w => w.status === 'correct').length;
-            alert(`Game Over! Correct answers: ${correctCount} / 24`);
-            location.reload();
+            const correct = session.filter(w => w.status === 'correct').length;
+            const wrong = session.filter(w => w.status === 'wrong').length;
+            
+            document.getElementById('panel').innerHTML = `
+                <h2>Game Finished!</h2>
+                <p style="font-size:1.5rem">Correct: ${correct} | Wrong: ${wrong}</p>
+                <button onclick="location.reload()" style="background:var(--soft-blue); width:200px">Play Again</button>
+            `;
         }
 
         document.getElementById('userInput').addEventListener('keypress', (e) => {
