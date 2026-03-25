@@ -1,4 +1,3 @@
-// words.js içeriği
 const a1Words = [ 
     // A Harfi
     { l: 'A', q: 'A fruit that is red or green.', a: ['apple'], lv: 'A1' },
@@ -756,5 +755,4 @@ const b1Words = [
     { l: 'Z', q: 'A great interest or excitement.', a: ['zest'], lv: 'B1' }
  ];
 
-// Kelimeleri dışarıya aktar (Global hale getir)
 window.allWords = [...a1Words, ...a2Words, ...b1Words];
