@@ -3,445 +3,327 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Oxford 600 Audio Mastery</title>
+    <title>Oxford 600 - Word Adventure</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 20px; }
-        h1 { color: #38bdf8; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; text-align: center; }
-        .cefr-tag { font-size: 0.9rem; color: #94a3b8; margin-bottom: 15px; border-bottom: 1px solid #334155; padding-bottom: 5px; }
-        .stats-bar { display: flex; gap: 40px; margin: 15px 0; background: rgba(30, 41, 59, 0.9); padding: 12px 35px; border-radius: 50px; border: 1px solid #334155; }
-        #timer, #score-display { font-size: 1.8rem; font-weight: bold; color: #38bdf8; font-variant-numeric: tabular-nums; }
-        #score-display { color: #f59e0b; }
-        #game-container { position: relative; width: 500px; height: 500px; margin: 20px auto; }
-        .letter-node { position: absolute; width: 34px; height: 34px; background: #1e293b; border: 2px solid #38bdf8; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; transition: 0.3s; transform: translate(-50%, -50%); font-size: 0.8rem; color: #38bdf8; }
-        .correct { background: #22c55e !important; border-color: #fff; color: white; box-shadow: 0 0 15px #22c55e; }
-        .wrong { background: #ef4444 !important; border-color: #fff; color: white; }
-        .passed { background: #f59e0b !important; border-color: #fff; color: white; }
-        .active { background: #38bdf8 !important; border-color: #fff; color: #0f172a; transform: translate(-50%, -50%) scale(1.4); z-index: 20; box-shadow: 0 0 25px #38bdf8; }
-        #ui-overlay { text-align: center; width: 100%; max-width: 680px; background: #1e293b; padding: 30px; border-radius: 24px; border: 1px solid #334155; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
-        #definition-display { font-size: 1.2rem; min-height: 100px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; padding: 0 20px; }
-        #hint-display { font-size: 1.4rem; color: #f59e0b; min-height: 40px; margin-bottom: 20px; font-family: 'Courier New', monospace; letter-spacing: 6px; font-weight: bold; }
-        .controls, .difficulty-select { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-        input { padding: 15px; font-size: 1.2rem; border-radius: 12px; border: 2px solid #334155; width: 240px; background: #0f172a; color: white; outline: none; text-align: center; }
-        button { padding: 12px 25px; font-size: 1rem; cursor: pointer; border-radius: 12px; border: none; font-weight: bold; color: white; transition: 0.2s; text-transform: uppercase; }
-        .btn-a1 { background: #22c55e; } .btn-a2 { background: #f59e0b; } .btn-b1 { background: #ef4444; }
-        #restart-btn { background: #38bdf8; color: #0f172a; margin-top: 25px; padding: 15px 50px; }
-        .audio-toggle { margin-top: 10px; font-size: 0.8rem; color: #94a3b8; cursor: pointer; }
+        :root {
+            --warm-orange: #ff9a8b;
+            --soft-yellow: #ffd080;
+            --mint-green: #a8e6cf;
+            --coral: #ff8b94;
+            --text-dark: #2d3436;
+            --glass-bg: rgba(255, 255, 255, 0.9);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #ff9a8b 0%, #ff6a88 55%, #ff99ac 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-dark);
+        }
+
+        h1 {
+            color: white;
+            text-shadow: 2px 4px 10px rgba(0,0,0,0.1);
+            font-size: 2.5rem;
+            margin-bottom: 5px;
+        }
+
+        /* Çember Alanı */
+        #game-area {
+            position: relative;
+            width: 520px;
+            height: 520px;
+            margin: 30px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .letter {
+            position: absolute;
+            width: 42px;
+            height: 42px;
+            background: white;
+            border: 3px solid var(--soft-yellow);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1rem;
+            color: var(--coral);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 5;
+            cursor: pointer;
+        }
+
+        .active { 
+            background: var(--soft-yellow) !important; 
+            color: white; 
+            transform: translate(-50%, -50%) scale(1.5) !important; 
+            z-index: 100; 
+            box-shadow: 0 0 25px rgba(255, 208, 128, 0.8);
+            border-color: white;
+        }
+
+        .correct { background: var(--mint-green) !important; border-color: white; color: white; }
+        .wrong { background: var(--coral) !important; border-color: white; color: white; }
+        .passed { background: #dfe6e9 !important; border-color: #b2bec3; color: #636e72; }
+
+        /* UI Panel */
+        #ui-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 30px;
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #ff6b81;
+        }
+
+        #definition {
+            font-size: 1.3rem;
+            min-height: 80px;
+            margin-bottom: 10px;
+            line-height: 1.6;
+            color: #4a4a4a;
+        }
+
+        #hint-text {
+            font-size: 1.8rem;
+            color: #f39c12;
+            letter-spacing: 8px;
+            font-family: monospace;
+            min-height: 40px;
+            font-weight: bold;
+        }
+
+        input {
+            padding: 15px;
+            width: 80%;
+            font-size: 1.4rem;
+            border-radius: 15px;
+            border: 2px solid #eee;
+            background: #fdfdfd;
+            text-align: center;
+            outline: none;
+            margin-bottom: 20px;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            border-color: var(--warm-orange);
+            box-shadow: 0 0 10px rgba(255, 154, 139, 0.3);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 14px 28px;
+            border-radius: 12px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        button:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
+
+        .btn-check { background: var(--mint-green); color: #2d3436; flex: 2; }
+        .btn-pass { background: #f1f2f6; color: #7f8c8d; flex: 1; }
+        .start-btn { 
+            background: white; color: var(--coral); font-size: 1.2rem; padding: 20px 40px; 
+            margin: 10px; border: 2px solid var(--coral);
+        }
+
+        @media (max-width: 600px) {
+            #game-area { width: 340px; height: 340px; }
+            .letter { width: 32px; height: 32px; font-size: 0.75rem; }
+        }
     </style>
 </head>
 <body>
 
-    <h1>Oxford Mastery Audio</h1>
-    <div class="cefr-tag">A1-B1 | 600 Words | Sound Enabled</div>
-    
-    <div class="stats-bar">
-        <div id="timer">00:00</div>
-        <div id="score-display">Score: 0</div>
+    <h1>Word Adventure 🎡</h1>
+
+    <div id="game-area">
+        <div id="wheel-container"></div>
+        <div id="start-screen" style="z-index: 200; text-align: center;">
+            <p style="color: white; font-weight: bold;">Choose your challenge!</p>
+            <button class="start-btn" onclick="initGame('A1')">Easy (A1)</button><br>
+            <button class="start-btn" onclick="initGame('A2')">Medium (A2)</button><br>
+            <button class="start-btn" onclick="initGame('B1')">Hard (B1)</button>
+        </div>
     </div>
-    
-    <div id="game-container"></div>
 
-    <div id="ui-overlay">
-        <div id="definition-display">Press a level to start. Definitions will be read aloud!</div>
-        <div id="hint-display"></div>
-        
-        <div class="difficulty-select" id="diff-select">
-            <button class="btn-a1" onclick="startGame('easy')">A1</button>
-            <button class="btn-a2" onclick="startGame('medium')">A2</button>
-            <button class="btn-b1" onclick="startGame('hard')">B1</button>
+    <div id="ui-panel" style="display:none;">
+        <div class="stats">
+            <span id="timer">⏰ 05:00</span>
+            <span id="score">⭐ 0</span>
         </div>
-
-        <div class="controls" id="controls" style="display:none;">
-            <input type="text" id="answer-input" placeholder="Type..." autocomplete="off">
-            <button style="background:#22c55e" onclick="checkAnswer()">Check</button>
-            <button style="background:#f59e0b" onclick="handlePass()">Pass</button>
+        <div id="definition">Listen and type the word...</div>
+        <div id="hint-text"></div>
+        <input type="text" id="ans-input" placeholder="Type here..." autocomplete="off">
+        <div class="btn-group">
+            <button class="btn-check" onclick="handleCheck()">Check</button>
+            <button style="background: #f9ca24; color: white;" onclick="handleHint()">Hint</button>
+            <button class="btn-pass" onclick="handlePass()">Pass</button>
         </div>
-        
-        <div class="audio-toggle" onclick="toggleAudio()" id="audio-status">🔊 Audio: ON</div>
-        <button id="restart-btn" style="display:none;" onclick="location.reload()">MAIN MENU</button>
     </div>
 
 <script>
-    // --- SES MOTORU (AUDIO ENGINE) ---
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    let audioEnabled = true;
-
-    function playSound(freq, type, duration) {
-        if (!audioEnabled) return;
+    // --- 🔊 SOUND SYSTEM ---
+    let audioCtx = null;
+    function playBip(freq, dur) {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
-        osc.type = type;
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        osc.frequency.value = freq;
+        osc.type = 'sine';
         gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + duration);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + dur);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + dur);
     }
 
     const sfx = {
-        correct: () => { playSound(880, 'sine', 0.2); setTimeout(() => playSound(1109, 'sine', 0.3), 100); },
-        wrong: () => playSound(150, 'sawtooth', 0.4),
-        pass: () => playSound(300, 'square', 0.2),
-        end: () => { playSound(440, 'sine', 0.5); playSound(554, 'sine', 0.5); playSound(659, 'sine', 0.5); }
+        correct: () => { playBip(880, 0.2); setTimeout(()=>playBip(1108, 0.3), 100); },
+        wrong: () => playBip(220, 0.4),
+        pass: () => playBip(440, 0.2)
     };
 
-    function speak(text) {
-        if (!audioEnabled) return;
+    function speak(txt) {
         window.speechSynthesis.cancel();
-        const msg = new SpeechSynthesisUtterance(text);
-        msg.lang = 'en-GB';
-        msg.rate = 0.9;
-        window.speechSynthesis.speak(msg);
+        const m = new SpeechSynthesisUtterance(txt);
+        m.lang = 'en-GB'; m.rate = 0.85;
+        window.speechSynthesis.speak(m);
     }
 
-    function toggleAudio() {
-        audioEnabled = !audioEnabled;
-        document.getElementById('audio-status').innerText = audioEnabled ? "🔊 Audio: ON" : "🔇 Audio: OFF";
-        if (!audioEnabled) window.speechSynthesis.cancel();
-    }
-    
-<script>
-    // --- FULL 600-WORD DATABASE ---
-    const allWords = [
-        // A
-        { L: 'A', q: 'The place where you catch a flight.', a: ['airport'], cefr: 'A1' },
-        { L: 'A', q: 'To say yes to an invitation.', a: ['accept'], cefr: 'A2' },
-        { L: 'A', q: 'Feeling of great surprise.', a: ['amazement'], cefr: 'B1' },
-        { L: 'A', q: 'The study of stars and space.', a: ['astronomy'], cefr: 'B1' },
-        { L: 'A', q: 'A person who acts in a play.', a: ['actor'], cefr: 'A1' },
-        { L: 'A', q: 'To have enough money for something.', a: ['afford'], cefr: 'A2' },
-        { L: 'A', q: 'To make something better.', a: ['amend'], cefr: 'B1' },
-        { L: 'A', q: 'The first letter of the alphabet.', a: ['alpha'], cefr: 'A1' },
-        // B
-        { L: 'B', q: 'The first meal of the day.', a: ['breakfast'], cefr: 'A1' },
-        { L: 'B', q: 'To act in a certain way.', a: ['behave'], cefr: 'A2' },
-        { L: 'B', q: 'A professional hair cutter for men.', a: ['barber'], cefr: 'B1' },
-        { L: 'B', q: 'A person who puts out fires.', a: ['firefighter'], cefr: 'A1' },
-        { L: 'B', q: 'A container for holding things.', a: ['basket'], cefr: 'A2' },
-        { L: 'B', q: 'A small wooden board for surfing.', a: ['bodyboard'], cefr: 'B1' },
-        { L: 'B', q: 'Something simple and fundamental.', a: ['basic'], cefr: 'A1' },
-        { L: 'B', q: 'To mix ingredients together.', a: ['blend'], cefr: 'B1' },
-        // C
-        { L: 'C', q: 'A device for taking photos.', a: ['camera'], cefr: 'A1' },
-        { L: 'C', q: 'The weather patterns of a place.', a: ['climate'], cefr: 'A2' },
-        { L: 'C', q: 'A person you work with.', a: ['colleague'], cefr: 'B1' },
-        { L: 'C', q: 'Sweet food made from cocoa.', a: ['chocolate'], cefr: 'A1' },
-        { L: 'C', q: 'To state something is true.', a: ['claim'], cefr: 'B1' },
-        { L: 'C', q: 'Capital city of a country.', a: ['capital'], cefr: 'A2' },
-        { L: 'C', q: 'A person who cooks in a restaurant.', a: ['chef'], cefr: 'A2' },
-        { L: 'C', q: 'The study of chemical substances.', a: ['chemistry'], cefr: 'B1' },
-        // D
-        { L: 'D', q: 'A book for word meanings.', a: ['dictionary'], cefr: 'A1' },
-        { L: 'D', q: 'A doctor for teeth.', a: ['dentist'], cefr: 'A2' },
-        { L: 'D', q: 'To explain the meaning of a word.', a: ['define'], cefr: 'B1' },
-        { L: 'D', q: 'Opposite of light.', a: ['dark'], cefr: 'A1' },
-        { L: 'D', q: 'To go under water.', a: ['dive'], cefr: 'A2' },
-        { L: 'D', q: 'A hard situation.', a: ['difficulty'], cefr: 'B1' },
-        { L: 'D', q: 'The end of life.', a: ['death'], cefr: 'A2' },
-        { L: 'D', q: 'A person who leads an orchestra.', a: ['director'], cefr: 'B1' },
-        // E
-        { L: 'E', q: 'Large animal with a trunk.', a: ['elephant'], cefr: 'A1' },
-        { L: 'E', q: 'The world around us.', a: ['environment'], cefr: 'A2' },
-        { L: 'E', q: 'Clear and easy to see.', a: ['evident'], cefr: 'B1' },
-        { L: 'E', q: 'Physical or mental power.', a: ['effort'], cefr: 'B1' },
-        { L: 'E', q: 'The opposite of West.', a: ['east'], cefr: 'A1' },
-        { L: 'E', q: 'To give hope to someone.', a: ['encourage'], cefr: 'A2' },
-        { L: 'E', q: 'Scientific study of the economy.', a: ['economics'], cefr: 'B1' },
-        { L: 'E', q: 'To go out of a building.', a: ['exit'], cefr: 'A1' },
-        // F
-        { L: 'F', q: 'The season after summer.', a: ['fall', 'autumn'], cefr: 'A1' },
-        { L: 'F', q: 'Known by many people.', a: ['famous'], cefr: 'A2' },
-        { L: 'F', q: 'Strong feeling of interest.', a: ['fascination'], cefr: 'B1' },
-        { L: 'F', q: 'The part of the body for walking.', a: ['foot'], cefr: 'A1' },
-        { L: 'F', q: 'To give a signal of light.', a: ['flash'], cefr: 'A2' },
-        { L: 'F', q: 'To provide money for a project.', a: ['finance'], cefr: 'B1' },
-        { L: 'F', q: 'A person who is a close companion.', a: ['friend'], cefr: 'A1' },
-        { L: 'F', q: 'The state of being free.', a: ['freedom'], cefr: 'B1' },
-        // G
-        { L: 'G', q: 'Area for growing plants.', a: ['garden'], cefr: 'A1' },
-        { L: 'G', q: 'A person visiting your home.', a: ['guest'], cefr: 'A2' },
-        { L: 'G', q: 'To promise something is true.', a: ['guarantee'], cefr: 'B1' },
-        { L: 'G', q: 'A group of people living together.', a: ['generation'], cefr: 'B1' },
-        { L: 'G', q: 'To look at something for a long time.', a: ['gaze'], cefr: 'B1' },
-        { L: 'G', q: 'Something that is very big.', a: ['giant'], cefr: 'A2' },
-        { L: 'G', q: 'The study of the Earth.', a: ['geography'], cefr: 'A2' },
-        { L: 'G', q: 'The color of grass.', a: ['green'], cefr: 'A1' },
-        // H
-        { L: 'H', q: 'Building for sick people.', a: ['hospital'], cefr: 'A1' },
-        { L: 'H', q: 'To stop something from happening.', a: ['hinder'], cefr: 'B1' },
-        { L: 'H', q: 'The part of the body that pumps blood.', a: ['heart'], cefr: 'A1' },
-        { L: 'H', q: 'A person who helps others.', a: ['helper'], cefr: 'A1' },
-        { L: 'H', q: 'The period of time after now.', a: ['hereafter'], cefr: 'B1' },
-        { L: 'H', q: 'To have a great respect for.', a: ['honor', 'honour'], cefr: 'B1' },
-        { L: 'H', q: 'A place where you live.', a: ['house'], cefr: 'A1' },
-        { L: 'H', q: 'To keep something safe.', a: ['harbor', 'harbour'], cefr: 'B1' },
-        // I
-        { L: 'I', q: 'Something that cannot happen.', a: ['impossible'], cefr: 'A1' },
-        { L: 'I', q: 'To make something better.', a: ['improvement'], cefr: 'B1' },
-        { L: 'I', q: 'To tell someone to come to a party.', a: ['invite'], cefr: 'A2' },
-        { L: 'I', q: 'A person who is very smart.', a: ['intelligent'], cefr: 'B1' },
-        { L: 'I', q: 'A frozen block of water.', a: ['ice'], cefr: 'A1' },
-        { L: 'I', q: 'To give a clear picture of.', a: ['illustrate'], cefr: 'B1' },
-        { L: 'I', q: 'To have a positive effect on.', a: ['inspire'], cefr: 'B1' },
-        { L: 'I', q: 'The study of computer systems.', a: ['information'], cefr: 'A2' },
-        // J
-        { L: 'J', q: 'Clothing for the upper body.', a: ['jacket'], cefr: 'A1' },
-        { L: 'J', q: 'To decide the quality of.', a: ['judge'], cefr: 'B1' },
-        { L: 'J', q: 'A funny story.', a: ['joke'], cefr: 'A2' },
-        { L: 'J', q: 'The part of the body for chewing.', a: ['jaw'], cefr: 'B1' },
-        { L: 'J', q: 'To travel from place to place.', a: ['journey'], cefr: 'A2' },
-        { L: 'J', q: 'To join two things together.', a: ['junction'], cefr: 'B1' },
-        { L: 'J', q: 'Liquid from a fruit.', a: ['juice'], cefr: 'A1' },
-        { L: 'J', q: 'A person who works in a court.', a: ['justice'], cefr: 'B1' },
-        // K
-        { L: 'K', q: 'Room for cooking.', a: ['kitchen'], cefr: 'A1' },
-        { L: 'K', q: 'Hit with your foot.', a: ['kick'], cefr: 'A2' },
-        { L: 'K', q: 'Very smart and sharp.', a: ['keen'], cefr: 'B1' },
-        { L: 'K', q: 'A metal tool for a lock.', a: ['key'], cefr: 'A1' },
-        { L: 'K', q: 'To stay in a certain place.', a: ['keep'], cefr: 'A1' },
-        { L: 'K', q: 'A person who rules a country.', a: ['king'], cefr: 'A1' },
-        { L: 'K', q: 'The part of the leg that bends.', a: ['knee'], cefr: 'A1' },
-        { L: 'K', q: 'To use a knife to open.', a: ['knife'], cefr: 'A1' },
-        // L
-        { L: 'L', q: 'To pay attention to sound.', a: ['listen'], cefr: 'A1' },
-        { L: 'L', q: 'Quality of being faithful.', a: ['loyalty'], cefr: 'B1' },
-        { L: 'L', q: 'A person who leads a group.', a: ['leader'], cefr: 'A2' },
-        { L: 'L', q: 'The study of laws.', a: ['legal'], cefr: 'B1' },
-        { L: 'L', q: 'To go away from a place.', a: ['leave'], cefr: 'A1' },
-        { L: 'L', q: 'A piece of paper for reading.', a: ['letter'], cefr: 'A1' },
-        { L: 'L', q: 'The light from the sun.', a: ['light'], cefr: 'A1' },
-        { L: 'L', q: 'To look for something.', a: ['look'], cefr: 'A1' },
-        // M
-        { L: 'M', q: 'Story on a screen.', a: ['movie', 'film'], cefr: 'A1' },
-        { L: 'M', q: 'To keep in good condition.', a: ['manage'], cefr: 'B1' },
-        { L: 'M', q: 'A person in a club.', a: ['member'], cefr: 'A2' },
-        { L: 'M', q: 'The study of numbers.', a: ['maths', 'mathematics'], cefr: 'A2' },
-        { L: 'M', q: 'A large mountain.', a: ['mountain'], cefr: 'A1' },
-        { L: 'M', q: 'To make a choice.', a: ['measure'], cefr: 'B1' },
-        { L: 'M', q: 'A professional in medicine.', a: ['medical'], cefr: 'B1' },
-        { L: 'M', q: 'The center of something.', a: ['middle'], cefr: 'A1' },
-        // N
-        { L: 'N', q: 'Person living next door.', a: ['neighbor', 'neighbour'], cefr: 'A1' },
-        { L: 'N', q: 'Something that must be done.', a: ['necessary'], cefr: 'B1' },
-        { L: 'N', q: 'The group leading a country.', a: ['nation'], cefr: 'A2' },
-        { L: 'N', q: 'The opposite of South.', a: ['north'], cefr: 'A1' },
-        { L: 'N', q: 'Something that is not old.', a: ['new'], cefr: 'A1' },
-        { L: 'N', q: 'To take notice of.', a: ['notice'], cefr: 'A2' },
-        { L: 'N', q: 'To have a clear idea.', a: ['notion'], cefr: 'B1' },
-        { L: 'N', q: 'A person who writes books.', a: ['novelist'], cefr: 'B1' },
-        // O
-        { L: 'O', q: 'Large salt water body.', a: ['ocean', 'sea'], cefr: 'A1' },
-        { L: 'O', q: 'Something you can choose.', a: ['option'], cefr: 'B1' },
-        { L: 'O', q: 'Opposite of closed.', a: ['open'], cefr: 'A1' },
-        { L: 'O', q: 'To have a strong opinion.', a: ['object'], cefr: 'B1' },
-        { L: 'O', q: 'The first of its kind.', a: ['original'], cefr: 'B1' },
-        { L: 'O', q: 'To take a chance.', a: ['opportunity'], cefr: 'B1' },
-        { L: 'O', q: 'A person who works in an office.', a: ['officer'], cefr: 'A2' },
-        { L: 'O', q: 'To organize a group.', a: ['organize'], cefr: 'A2' },
-        // P
-        { L: 'P', q: 'A celebration event.', a: ['party'], cefr: 'A1' },
-        { L: 'P', q: 'A skilled worker.', a: ['professional'], cefr: 'B1' },
-        { L: 'P', q: 'To get ready for something.', a: ['prepare'], cefr: 'A2' },
-        { L: 'P', q: 'A person who flies a plane.', a: ['pilot'], cefr: 'A2' },
-        { L: 'P', q: 'To make a point.', a: ['predict'], cefr: 'B1' },
-        { L: 'P', q: 'Something you can use.', a: ['product'], cefr: 'B1' },
-        { L: 'P', q: 'The study of the mind.', a: ['psychology'], cefr: 'B1' },
-        { L: 'P', q: 'A piece of paper for a wall.', a: ['poster'], cefr: 'A1' },
-        // Q
-        { L: 'Q', q: 'Woman who rules a kingdom.', a: ['queen'], cefr: 'A1' },
-        { L: 'Q', q: 'Standard of something.', a: ['quality'], cefr: 'B1' },
-        { L: 'Q', q: 'To finish a job.', a: ['quit'], cefr: 'A2' },
-        { L: 'Q', q: 'To ask a question.', a: ['query'], cefr: 'B1' },
-        { L: 'Q', q: 'To be very fast.', a: ['quick'], cefr: 'A1' },
-        { L: 'Q', q: 'A line of people waiting.', a: ['queue'], cefr: 'A2' },
-        { L: 'Q', q: 'To give a clear answer.', a: ['quote'], cefr: 'B1' },
-        { L: 'Q', q: 'A small test of knowledge.', a: ['quiz'], cefr: 'A1' },
-        // R
-        { L: 'R', q: 'Natural water flow.', a: ['river'], cefr: 'A1' },
-        { L: 'R', q: 'To fix something broken.', a: ['repair'], cefr: 'B1' },
-        { L: 'R', q: 'To give an answer.', a: ['reply'], cefr: 'A2' },
-        { L: 'R', q: 'To run for a prize.', a: ['race'], cefr: 'A1' },
-        { L: 'R', q: 'To have a strong feeling.', a: ['react'], cefr: 'B1' },
-        { L: 'R', q: 'To keep a record.', a: ['register'], cefr: 'B1' },
-        { L: 'R', q: 'Something that is true.', a: ['reality'], cefr: 'B1' },
-        { L: 'R', q: 'To take a rest.', a: ['relax'], cefr: 'A2' },
-        // S
-        { L: 'S', q: 'Building for education.', a: ['school'], cefr: 'A1' },
-        { L: 'S', q: 'Being free from danger.', a: ['safety'], cefr: 'B1' },
-        { L: 'S', q: 'To look for something.', a: ['search'], cefr: 'A2' },
-        { L: 'S', q: 'Something that is not hard.', a: ['soft'], cefr: 'A1' },
-        { L: 'S', q: 'To give a signal.', a: ['signal'], cefr: 'B1' },
-        { L: 'S', q: 'The state of being calm.', a: ['silence'], cefr: 'B1' },
-        { L: 'S', q: 'To have a clear idea.', a: ['suggest'], cefr: 'A2' },
-        { L: 'S', q: 'The study of social life.', a: ['sociology'], cefr: 'B1' },
-        // T
-        { L: 'T', q: 'Vehicle on metal tracks.', a: ['train'], cefr: 'A1' },
-        { L: 'T', q: 'To believe someone is honest.', a: ['trust'], cefr: 'B1' },
-        { L: 'T', q: 'To speak to someone.', a: ['talk'], cefr: 'A1' },
-        { L: 'T', q: 'To take a chance.', a: ['threat'], cefr: 'B1' },
-        { L: 'T', q: 'A person who teaches.', a: ['teacher'], cefr: 'A1' },
-        { L: 'T', q: 'To make a choice.', a: ['target'], cefr: 'B1' },
-        { L: 'T', q: 'Something that is true.', a: ['truth'], cefr: 'B1' },
-        { L: 'T', q: 'A group of players.', a: ['team'], cefr: 'A1' },
-        // U
-        { L: 'U', q: 'Rain protection device.', a: ['umbrella'], cefr: 'A1' },
-        { L: 'U', q: 'Something one of a kind.', a: ['unique'], cefr: 'B1' },
-        { L: 'U', q: 'To have a clear idea.', a: ['understand'], cefr: 'A1' },
-        { L: 'U', q: 'To make something better.', a: ['update'], cefr: 'B1' },
-        { L: 'U', q: 'A person in a school.', a: ['university'], cefr: 'A2' },
-        { L: 'U', q: 'To be not sure.', a: ['uncertain'], cefr: 'B1' },
-        { L: 'U', q: 'Below something else.', a: ['under'], cefr: 'A1' },
-        { L: 'U', q: 'To use something.', a: ['utilize', 'utilise'], cefr: 'B1' },
-        // V
-        { L: 'V', q: 'Rural settlement.', a: ['village'], cefr: 'A1' },
-        { L: 'V', q: 'Power to elect someone.', a: ['vote'], cefr: 'B1' },
-        { L: 'V', q: 'To go and see a place.', a: ['visit'], cefr: 'A1' },
-        { L: 'V', q: 'Something very important.', a: ['valuable'], cefr: 'B1' },
-        { L: 'V', q: 'To have a clear view.', a: ['vision'], cefr: 'B1' },
-        { L: 'V', q: 'The power of a sound.', a: ['volume'], cefr: 'B1' },
-        { L: 'V', q: 'A person who helps for free.', a: ['volunteer'], cefr: 'B1' },
-        { L: 'V', q: 'To take a vacation.', a: ['vacation'], cefr: 'A2' },
-        // W
-        { L: 'W', q: 'Liquid essential for life.', a: ['water'], cefr: 'A1' },
-        { L: 'W', q: 'State of being rich.', a: ['wealth'], cefr: 'B1' },
-        { L: 'W', q: 'To give a signal of danger.', a: ['warn'], cefr: 'A2' },
-        { L: 'W', q: 'The part of the body for walking.', a: ['waist'], cefr: 'B1' },
-        { L: 'W', q: 'To have a strong desire.', a: ['want'], cefr: 'A1' },
-        { L: 'W', q: 'To look at something.', a: ['watch'], cefr: 'A1' },
-        { L: 'W', q: 'The conditions of the air.', a: ['weather'], cefr: 'A1' },
-        { L: 'W', q: 'A person who writes.', a: ['writer'], cefr: 'A1' },
-        // Y
-        { L: 'Y', q: 'Color of the sun.', a: ['yellow'], cefr: 'A1' },
-        { L: 'Y', q: 'To shout loudly.', a: ['yell'], cefr: 'B1' },
-        { L: 'Y', q: 'A period of 365 days.', a: ['year'], cefr: 'A1' },
-        { L: 'Y', q: 'Opposite of old.', a: ['young'], cefr: 'A1' },
-        { L: 'Y', q: 'To have a strong desire.', a: ['yearn'], cefr: 'B1' },
-        { L: 'Y', q: 'A small boat.', a: ['yacht'], cefr: 'B1' },
-        { L: 'Y', q: 'A field of grass.', a: ['yard'], cefr: 'A2' },
-        { L: 'Y', q: 'To say yes.', a: ['yield'], cefr: 'B1' },
-        // Z
-        { L: 'Z', q: 'Place for wild animals.', a: ['zoo'], cefr: 'A1' },
-        { L: 'Z', q: 'Great energy or enthusiasm.', a: ['zeal'], cefr: 'B1' },
-        { L: 'Z', q: 'Line moving left and right.', a: ['zigzag'], cefr: 'A2' },
-        { L: 'Z', q: 'A region or area.', a: ['zone'], cefr: 'A2' },
-        { L: 'Z', q: 'Zero point of temperature.', a: ['zero'], cefr: 'A1' },
-        { L: 'Z', q: 'To focus on something.', a: ['zoom'], cefr: 'B1' },
-        { L: 'Z', q: 'A person with great energy.', a: ['zest'], cefr: 'B1' },
-        { L: 'Z', q: 'A type of musical instrument.', a: ['zither'], cefr: 'B1' }
-    ];
+<script src="words.js"></script>
 
-    // --- GAME ENGINE ---
-    let currentSessionWords = [];
-    let currentIndex = 0, timeLeft = 0, timerId, score = 0, results = [];
-    const configs = {
-        easy: { cefr: 'A1', time: 240 },
-        medium: { cefr: 'A2', time: 180 },
-        hard: { cefr: 'B1', time: 120 }
-    };
+    let session = [], current = 0, score = 0, time = 300, timerId, hintUsed = false;
+    const alphabet = "ABCDEFGHIKLMNOPQRSTUVWYZ".split("");
 
-    function startGame(diff) {
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        currentSessionWords = prepareSession(diff);
-        createWheel();
-        score = 0; currentIndex = 0; timeLeft = configs[diff].time;
-        results = Array(currentSessionWords.length).fill(null);
-        document.getElementById('diff-select').style.display = 'none';
-        document.getElementById('controls').style.display = 'flex';
-        updateDisplay();
+    function initGame(level) {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        session = alphabet.map(char => {
+            let pool = wordBank.filter(w => w.l === char && w.lv === level);
+            if (pool.length === 0) pool = wordBank.filter(w => w.l === char);
+            return { ...pool[Math.floor(Math.random()*pool.length)], status: 'pending' };
+        });
+
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('ui-panel').style.display = 'block';
+        
+        drawWheel();
         startTimer();
+        updateGame();
     }
 
-    function prepareSession(diff) {
-        const target = configs[diff].cefr;
-        const alphabet = "ABCDEFGHIKLMNOPQRSTUVWYZ".split("");
-        return alphabet.map(l => {
-            let m = allWords.filter(w => w.L === l && w.cefr === target);
-            if (m.length === 0) m = allWords.filter(w => w.L === l);
-            return m[Math.floor(Math.random() * m.length)];
-        }).filter(x => x);
-    }
-
-    function createWheel() {
-        const container = document.getElementById('game-container');
+    function drawWheel() {
+        const container = document.getElementById('wheel-container');
         container.innerHTML = "";
-        currentSessionWords.forEach((w, i) => {
+        const radius = window.innerWidth < 600 ? 150 : 230;
+
+        session.forEach((w, i) => {
             const div = document.createElement('div');
-            div.className = 'letter-node';
-            div.id = `node-${i}`;
-            div.innerText = w.L;
-            const angle = (i / currentSessionWords.length) * 2 * Math.PI - Math.PI / 2;
-            div.style.left = (250 + 220 * Math.cos(angle)) + 'px';
-            div.style.top = (250 + 220 * Math.sin(angle)) + 'px';
+            div.className = 'letter';
+            div.id = `L-${i}`;
+            div.innerText = w.l;
+            const angle = (i / session.length) * 2 * Math.PI - Math.PI / 2;
+            div.style.left = `calc(50% + ${radius * Math.cos(angle)}px)`;
+            div.style.top = `calc(50% + ${radius * Math.sin(angle)}px)`;
             container.appendChild(div);
         });
     }
 
-    function updateDisplay() {
-        const allDone = results.every(r => r === 1 || r === 0);
-        if (allDone) return endGame("CONGRATS!");
-
-        while (results[currentIndex] === 1 || results[currentIndex] === 0) {
-            currentIndex = (currentIndex + 1) % currentSessionWords.length;
+    function updateGame() {
+        if (session.every(w => w.status === 'correct' || w.status === 'wrong')) return end("Bravo! 🏆");
+        while (session[current].status === 'correct' || session[current].status === 'wrong') {
+            current = (current + 1) % session.length;
         }
-
-        document.querySelectorAll('.letter-node').forEach((el, idx) => {
-            el.className = 'letter-node' + (results[idx] === 1 ? ' correct' : results[idx] === 0 ? ' wrong' : results[idx] === 2 ? ' passed' : '');
-            if (idx === currentIndex) el.classList.add('active');
+        session.forEach((w, i) => {
+            document.getElementById(`L-${i}`).className = `letter ${w.status} ${i === current ? 'active' : ''}`;
         });
-
-        const currentQ = currentSessionWords[currentIndex].q;
-        document.getElementById('definition-display').innerText = currentSessionWords[currentIndex].L + ": " + currentQ;
-        document.getElementById('answer-input').value = "";
-        document.getElementById('answer-input').focus();
-        
-        // Seslendirme
-        speak(currentQ);
+        hintUsed = false;
+        document.getElementById('hint-text').innerText = "";
+        document.getElementById('definition').innerText = session[current].q;
+        document.getElementById('ans-input').value = "";
+        document.getElementById('ans-input').focus();
+        speak(session[current].q);
     }
 
-    function checkAnswer() {
-        const val = document.getElementById('answer-input').value.toLowerCase().trim();
-        if (!val) return;
-
-        if (currentSessionWords[currentIndex].a.includes(val)) {
-            results[currentIndex] = 1;
-            score += 100;
+    function handleCheck() {
+        const val = document.getElementById('ans-input').value.toLowerCase().trim();
+        if(!val) return;
+        if (session[current].a.includes(val)) {
+            session[current].status = 'correct';
+            score += hintUsed ? 50 : 100;
             sfx.correct();
         } else {
-            results[currentIndex] = 0;
+            session[current].status = 'wrong';
             score -= 20;
             sfx.wrong();
         }
-        document.getElementById('score-display').innerText = `Score: ${score}`;
-        currentIndex = (currentIndex + 1) % currentSessionWords.length;
-        updateDisplay();
+        document.getElementById('score').innerText = `⭐ ${score}`;
+        current = (current + 1) % session.length;
+        setTimeout(updateGame, 400);
+    }
+
+    function handleHint() {
+        if (hintUsed) return;
+        hintUsed = true;
+        const t = session[current].a[0];
+        document.getElementById('hint-text').innerText = `${t[0].toUpperCase()}...${t.slice(-1).toUpperCase()}`;
     }
 
     function handlePass() {
-        results[currentIndex] = 2;
+        session[current].status = 'passed';
         sfx.pass();
-        currentIndex = (currentIndex + 1) % currentSessionWords.length;
-        updateDisplay();
+        current = (current + 1) % session.length;
+        updateGame();
     }
 
     function startTimer() {
         timerId = setInterval(() => {
-            timeLeft--;
-            let m = Math.floor(timeLeft / 60), s = timeLeft % 60;
-            document.getElementById('timer').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-            if (timeLeft <= 0) endGame("TIME OVER");
+            time--;
+            const m = Math.floor(time/60), s = time%60;
+            document.getElementById('timer').innerText = `⏰ ${m}:${s<10?'0'+s:s}`;
+            if (time <= 0) end("Time's Up! ⌛");
         }, 1000);
     }
 
-    function endGame(msg) {
+    function end(msg) {
         clearInterval(timerId);
-        sfx.end();
-        document.getElementById('controls').style.display = 'none';
-        document.getElementById('restart-btn').style.display = 'inline-block';
-        document.getElementById('definition-display').innerHTML = `<h2>${msg}</h2><p>Score: ${score}</p>`;
+        document.getElementById('ui-panel').innerHTML = `<h2>${msg}</h2><p style="font-size:2rem">Final Score: ${score}</p><button class="start-btn" onclick="location.reload()">Try Again</button>`;
     }
 
-    document.getElementById('answer-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') checkAnswer(); });
+    document.getElementById('ans-input').addEventListener('keypress', (e) => { if(e.key === 'Enter') handleCheck(); });
 </script>
 </body>
 </html>
