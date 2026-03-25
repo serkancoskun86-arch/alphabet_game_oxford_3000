@@ -2,125 +2,260 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Word Adventure - Fix Version</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Oxford 600 - Ultimate Mobile</title>
     <style>
         :root { --coral: #ff8b94; --mint: #a8e6cf; --gold: #ffd080; --soft-blue: #3498db; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        #game-area { position: relative; width: 500px; height: 500px; margin: 20px; border-radius: 50%; background: white; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
-        .letter { position: absolute; width: 40px; height: 40px; background: white; border: 2px solid #ddd; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; transform: translate(-50%, -50%); z-index: 5; }
-        .active { background: var(--gold) !important; transform: translate(-50%, -50%) scale(1.3); z-index: 10; border-color: white; }
-        .correct { background: var(--mint) !important; color: white; }
-        .wrong { background: var(--coral) !important; color: white; }
-        .passed { background: #dfe6e9 !important; border-style: dashed; }
-        #panel { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 450px; text-align: center; display:none; }
-        input { padding: 12px; width: 80%; margin: 15px 0; border: 2px solid #eee; border-radius: 10px; font-size: 1.2rem; text-align: center; }
-        #debug-log { background: #333; color: #0f0; padding: 10px; width: 90%; max-width: 600px; font-family: monospace; font-size: 12px; margin-top: 20px; border-radius: 5px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 10px; touch-action: manipulation; }
+        
+        /* Responsive Wheel */
+        #game-area { position: relative; width: 85vw; height: 85vw; max-width: 450px; max-height: 450px; margin: 15px auto; border-radius: 50%; background: white; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .letter { position: absolute; width: 35px; height: 35px; background: white; border: 2px solid #eee; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem; transform: translate(-50%, -50%); transition: 0.3s; z-index: 5; }
+        
+        .active { background: var(--gold) !important; scale: 1.3; z-index: 10; border-color: white; box-shadow: 0 0 15px rgba(255, 208, 128, 0.6); }
+        .correct { background: var(--mint) !important; color: white; border: none; }
+        .wrong { background: var(--coral) !important; color: white; border: none; }
+        .passed { background: #dfe6e9 !important; border-style: dashed; color: #636e72; }
+
+        /* UI Panel */
+        #panel { background: white; padding: 20px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 95%; max-width: 450px; text-align: center; display:none; }
+        #timer { font-size: 1.8rem; font-weight: 900; margin-bottom: 10px; color: #333; }
+        #definition { font-size: 1.1rem; min-height: 60px; line-height: 1.4; color: #444; margin: 10px 0; }
+        #hint-area { color: #e67e22; font-weight: bold; letter-spacing: 2px; font-family: monospace; margin-bottom: 10px; }
+        
+        input { padding: 15px; width: 100%; border: 2px solid #f0f0f0; border-radius: 15px; font-size: 1.2rem; text-align: center; box-sizing: border-box; outline: none; transition: 0.3s; }
+        input:focus { border-color: var(--soft-blue); }
+
+        .controls { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+        button { padding: 15px; cursor: pointer; border: none; border-radius: 15px; color: white; font-weight: bold; font-size: 1rem; transition: 0.2s; }
+        .btn-check { background: var(--soft-blue); flex: 1 1 100%; }
+        .btn-hint { background: #f1c40f; flex: 1; }
+        .btn-pass { background: #95a5a6; flex: 1; }
+
+        #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; background: rgba(255,255,255,0.9); border-radius: 50%; }
+        .lvl-btn { background: var(--soft-blue); width: 70%; margin: 5px; padding: 12px; border-radius: 10px; }
+
+        #music-btn { position: fixed; top: 15px; right: 15px; background: white; border: 1px solid #ddd; border-radius: 50%; width: 40px; height: 40px; color: #333; z-index: 1000; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
 
+    <button id="music-btn" onclick="toggleMusic()">🎵</button>
     <h1>Word Adventure 🎡</h1>
-    
+
     <div id="game-area">
         <div id="wheel"></div>
-        <div id="overlay" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:100; text-align: center;">
-            <button onclick="startGame('A1')" style="padding:15px 30px; cursor:pointer; background:var(--mint); border:none; border-radius:10px; margin:5px;">START GAME</button>
-            <p id="load-status" style="font-size: 0.8rem; color: #666;">Checking words.js...</p>
+        <div id="overlay">
+            <h3 style="margin-bottom:15px; color:#2d3436;">Select Level</h3>
+            <button class="lvl-btn" style="background:var(--mint); color:#2d3436;" onclick="startGame('A1')">Beginner (A1)</button>
+            <button class="lvl-btn" style="background:var(--gold); color:#2d3436;" onclick="startGame('A2')">Elementary (A2)</button>
+            <button class="lvl-btn" style="background:var(--coral);" onclick="startGame('B1')">Intermediate (B1)</button>
         </div>
     </div>
 
     <div id="panel">
-        <div id="timer" style="font-size:1.5rem; font-weight:bold;">05:00</div>
-        <p id="definition" style="min-height:50px;"></p>
-        <p id="hint-area" style="color:orange; font-weight:bold;"></p>
-        <input type="text" id="userInput" placeholder="Answer...">
+        <div id="timer">05:00</div>
+        <p id="definition">Loading question...</p>
+        <p id="hint-area"></p>
+        <input type="text" id="userInput" placeholder="Answer..." autocomplete="off" inputmode="text" enterkeyhint="go">
+        <div class="controls">
+            <button class="btn-check" onclick="handleCheck()">CHECK</button>
+            <button class="btn-hint" onclick="getHint()">HINT</button>
+            <button class="btn-pass" onclick="handlePass()">PASS</button>
+        </div>
     </div>
-
-    <div id="debug-log">Log: Waiting for interaction...</div>
 
     <script src="words.js"></script>
 
     <script>
-        const log = (msg) => { document.getElementById('debug-log').innerText += "\n> " + msg; };
-        let session = [], currentIdx = 0, timer;
-        let audioCtx;
+        let session = [], currentIdx = 0, timeLeft = 420, timerInterval;
+        let audioCtx, musicGain, isMusicOn = true;
+        const alphabet = "ABCDEFGHIKLMNOPQRSTUVWYZ".split("");
 
-        // Check if data is loaded immediately
-        window.onload = () => {
-            if (window.allWords) {
-                log("Success: words.js loaded! " + window.allWords.length + " words found.");
-                document.getElementById('load-status').innerText = "✅ Ready to play!";
-            } else {
-                log("ERROR: words.js NOT found or window.allWords is missing!");
-                document.getElementById('load-status').innerText = "❌ words.js not found!";
-                document.getElementById('load-status').style.color = "red";
+        // --- 1. Sound & Music Engine ---
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                // "Unlock" audio for mobile
+                const buffer = audioCtx.createBuffer(1, 1, 22050);
+                const source = audioCtx.createBufferSource();
+                source.buffer = buffer;
+                source.connect(audioCtx.destination);
+                source.start(0);
+                
+                setupBackgroundMusic();
             }
-        };
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
 
+        function setupBackgroundMusic() {
+            musicGain = audioCtx.createGain();
+            musicGain.gain.setValueAtTime(0.02, audioCtx.currentTime);
+            musicGain.connect(audioCtx.destination);
+            
+            const notes = [261.63, 329.63, 392.00, 440.00];
+            setInterval(() => {
+                if (isMusicOn && audioCtx.state === 'running') {
+                    const osc = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(notes[Math.floor(Math.random()*notes.length)], audioCtx.currentTime);
+                    g.gain.setValueAtTime(0, audioCtx.currentTime);
+                    g.gain.linearRampToValueAtTime(0.02, audioCtx.currentTime + 0.5);
+                    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 4);
+                    osc.connect(g); g.connect(musicGain);
+                    osc.start(); osc.stop(audioCtx.currentTime + 4);
+                }
+            }, 5000);
+        }
+
+        function playSfx(freq, type='sine', dur=0.2) {
+            if(!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+            osc.connect(g); g.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + dur);
+        }
+
+        function toggleMusic() {
+            isMusicOn = !isMusicOn;
+            if (musicGain) musicGain.gain.setTargetAtTime(isMusicOn ? 0.02 : 0, audioCtx.currentTime, 0.1);
+            document.getElementById('music-btn').innerText = isMusicOn ? "🎵" : "🔇";
+        }
+
+        // --- 2. Game Logic ---
         function startGame(level) {
-            log("Attempting to start game...");
-            if (!window.allWords) {
-                alert("Cannot start: words.js data is missing. Make sure the file is in the same folder.");
+            initAudio();
+            
+            // Safety check for data
+            if (!window.allWords || window.allWords.length === 0) {
+                alert("Data Error: words.js not found or empty!");
                 return;
             }
 
-            try {
-                const alphabet = "ABCDEFGHIKLMNOPQRSTUVWYZ".split("");
-                session = alphabet.map(char => {
-                    const pool = window.allWords.filter(w => w.l === char);
-                    return { ...pool[0], status: 'pending' }; 
-                });
+            // Filter words based on level
+            session = alphabet.map(char => {
+                let pool = window.allWords.filter(w => w.l === char && w.lv === level);
+                if (pool.length === 0) pool = window.allWords.filter(w => w.l === char); // fallback if level has no word for letter
+                const word = pool[Math.floor(Math.random() * pool.length)];
+                return { ...word, status: 'pending' };
+            });
 
-                document.getElementById('overlay').style.display = 'none';
-                document.getElementById('panel').style.display = 'block';
-                
-                renderWheel();
-                refreshUI();
-                log("Game started successfully.");
-            } catch (e) {
-                log("CRASH: " + e.message);
-            }
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('panel').style.display = 'block';
+            
+            renderWheel();
+            startTimer();
+            refreshUI();
         }
 
         function renderWheel() {
             const wheel = document.getElementById('wheel');
-            const radius = 210;
+            wheel.innerHTML = '';
+            const rect = document.getElementById('game-area').getBoundingClientRect();
+            const radius = (rect.width / 2) - 25;
+            const center = rect.width / 2;
+
             session.forEach((item, i) => {
                 const div = document.createElement('div');
                 div.className = 'letter';
-                div.id = `letter-${i}`;
+                div.id = `L-${i}`;
                 div.innerText = item.l;
                 const angle = (i / session.length) * (Math.PI * 2) - (Math.PI / 2);
-                div.style.left = (250 + radius * Math.cos(angle)) + 'px';
-                div.style.top = (250 + radius * Math.sin(angle)) + 'px';
+                div.style.left = (center + radius * Math.cos(angle)) + 'px';
+                div.style.top = (center + radius * Math.sin(angle)) + 'px';
                 wheel.appendChild(div);
             });
         }
 
         function refreshUI() {
+            const done = session.every(w => w.status === 'correct' || w.status === 'wrong');
+            if (done) return endGame();
+
+            while (session[currentIdx].status === 'correct' || session[currentIdx].status === 'wrong') {
+                currentIdx = (currentIdx + 1) % session.length;
+            }
+
             session.forEach((w, i) => {
-                const el = document.getElementById(`letter-${i}`);
-                if(el) el.className = `letter ${w.status} ${i === currentIdx ? 'active' : ''}`;
+                const el = document.getElementById(`L-${i}`);
+                if (el) el.className = `letter ${w.status} ${i === currentIdx ? 'active' : ''}`;
             });
-            document.getElementById('definition').innerText = session[currentIdx].q;
+
+            const current = session[currentIdx];
+            document.getElementById('definition').innerText = current.q;
+            document.getElementById('hint-area').innerText = '';
             document.getElementById('userInput').value = '';
-            document.getElementById('userInput').focus();
+            
+            if (window.innerWidth > 768) document.getElementById('userInput').focus();
+            if (current.status === 'passed') getHint();
+
+            // TTS
+            window.speechSynthesis.cancel();
+            const speech = new SpeechSynthesisUtterance(current.q);
+            speech.lang = 'en-US';
+            window.speechSynthesis.speak(speech);
         }
 
-        // Simpler check for testing
-        document.getElementById('userInput').onkeypress = (e) => {
-            if (e.key === 'Enter') {
-                const val = e.target.value.toLowerCase();
-                if (session[currentIdx].a.includes(val)) {
-                    session[currentIdx].status = 'correct';
-                } else {
-                    session[currentIdx].status = 'wrong';
-                }
-                currentIdx = (currentIdx + 1) % session.length;
-                refreshUI();
+        function handleCheck() {
+            const val = document.getElementById('userInput').value.toLowerCase().trim();
+            if (!val) return;
+
+            if (session[currentIdx].a.includes(val)) {
+                session[currentIdx].status = 'correct';
+                playSfx(880);
+            } else {
+                session[currentIdx].status = 'wrong';
+                playSfx(200, 'sawtooth');
             }
-        };
+            next();
+        }
+
+        function getHint() {
+            const w = session[currentIdx].a[0];
+            document.getElementById('hint-area').innerText = `${w[0].toUpperCase()}...${w.slice(-1).toUpperCase()} (${w.length})`;
+        }
+
+        function handlePass() {
+            session[currentIdx].status = 'passed';
+            playSfx(440);
+            next();
+        }
+
+        function next() {
+            currentIdx = (currentIdx + 1) % session.length;
+            refreshUI();
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                let m = Math.floor(timeLeft / 60), s = timeLeft % 60;
+                document.getElementById('timer').innerText = `${m}:${s < 10 ? '0' + s : s}`;
+                if (timeLeft <= 0) endGame();
+            }, 1000);
+        }
+
+        function endGame() {
+            clearInterval(timerInterval);
+            const correct = session.filter(w => w.status === 'correct').length;
+            let html = `<h2>Summary</h2><p style="font-size:1.4rem">Score: ${correct}/24</p><div style="max-height:250px; overflow-y:auto; width:100%"><table style="width:100%; border-collapse:collapse; font-size:0.9rem;">`;
+            session.forEach(w => {
+                html += `<tr style="border-bottom:1px solid #eee; background:${w.status==='correct'?'#f1fcf4':'#fff5f5'}">
+                    <td style="padding:10px"><b>${w.l}</b></td>
+                    <td>${w.status==='correct'?'✅':'❌'}</td>
+                    <td style="text-align:right; padding-right:10px"><b>${w.a[0].toUpperCase()}</b></td>
+                </tr>`;
+            });
+            html += `</table></div><button onclick="location.reload()" style="background:var(--soft-blue); width:100%; margin-top:20px; padding:15px; border-radius:10px">PLAY AGAIN</button>`;
+            document.getElementById('panel').innerHTML = html;
+        }
+
+        document.getElementById('userInput').addEventListener('keypress', (e) => { if(e.key === 'Enter') handleCheck(); });
+        window.addEventListener('resize', renderWheel);
     </script>
 </body>
 </html>
