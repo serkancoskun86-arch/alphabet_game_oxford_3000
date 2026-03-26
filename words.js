@@ -694,7 +694,7 @@ const b1Words = [
     { l: 'S', q: 'A person who watches an event.', a: ['spectator'], lv: 'B1' },
 
     // T Harfi
-    { l: 'T', q: 'A large road vehicle.', a: ['truck', 'lorry'], lv: 'B1' },
+    { l: 'T', q: 'A large road vehicle.', a: ['truck'], lv: 'B1' },
     { l: 'T', q: 'To aim at a specific goal.', a: ['target'], lv: 'B1' },
     { l: 'T', q: 'A specific subject of discussion.', a: ['topic'], lv: 'B1' },
     { l: 'T', q: 'To move something from one place to another.', a: ['transfer'], lv: 'B1' },
